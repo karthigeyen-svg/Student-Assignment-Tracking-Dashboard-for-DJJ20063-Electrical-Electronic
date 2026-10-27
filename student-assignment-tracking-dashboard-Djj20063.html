@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>DJJ20063 – Student Assignment Tracking Dashboard</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    background: #f0f2f5;
+    color: #1f2328;
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: #1e3a5f;
+    color: #fff;
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .header-left { display: flex; align-items: center; gap: 14px; }
+  .header-icon {
+    width: 44px; height: 44px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+  }
+  .header h1 { font-size: 18px; font-weight: 700; letter-spacing: .2px; }
+  .header p { font-size: 12px; opacity: .75; margin-top: 1px; }
+  .header-badge {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 6px;
+    padding: 4px 12px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  /* ── Layout ── */
+  .main { max-width: 1280px; margin: 0 auto; padding: 24px 24px 40px; }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    color: #57606a;
+    margin-bottom: 12px;
+    margin-top: 28px;
+  }
+  .section-label:first-of-type { margin-top: 0; }
+
+  /* ── KPI cards ── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+  @media(max-width:900px) { .kpi-grid { grid-template-columns: repeat(2,1fr); } }
+  @media(max-width:500px) { .kpi-grid { grid-template-columns: 1fr; } }
+
+  .kpi-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+  }
+  .kpi-icon {
+    width: 42px; height: 42px; border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0;
+  }
+  .kpi-icon.blue   { background: #dbeafe; }
+  .kpi-icon.green  { background: #dcfce7; }
+  .kpi-icon.amber  { background: #fef9c3; }
+  .kpi-icon.red    { background: #fee2e2; }
+  .kpi-value { font-size: 28px; font-weight: 700; line-height: 1.1; }
+  .kpi-label { font-size: 12px; color: #57606a; margin-top: 3px; }
+
+  /* ── Charts row ── */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media(max-width:768px) { .charts-grid { grid-template-columns: 1fr; } }
+
+  .card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 20px;
+  }
+  .card-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1f2328;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* ── Bar chart (SVG) ── */
+  .bar-chart-wrap { width: 100%; overflow-x: auto; }
+  svg.bar-chart { display: block; width: 100%; min-width: 460px; }
+
+  /* ── Donut ── */
+  .donut-wrap { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
+  .donut-legend { flex: 1; min-width: 140px; }
+  .legend-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 13px; }
+  .legend-dot { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; }
+  .legend-val { margin-left: auto; font-weight: 700; }
+
+  /* ── Assessment summary grid ── */
+  .assess-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+  @media(max-width:900px) { .assess-grid { grid-template-columns: repeat(2,1fr); } }
+  @media(max-width:500px) { .assess-grid { grid-template-columns: 1fr; } }
+
+  .assess-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 16px;
+  }
+  .assess-title { font-size: 12px; font-weight: 600; color: #1f2328; margin-bottom: 8px; line-height: 1.4; min-height: 34px; }
+  .assess-stats { display: flex; gap: 10px; margin-bottom: 8px; }
+  .assess-stat { text-align: center; flex: 1; }
+  .assess-stat .num { font-size: 20px; font-weight: 700; }
+  .assess-stat .lbl { font-size: 10px; color: #57606a; }
+  .num.sub { color: #16a34a; }
+  .num.pend { color: #dc2626; }
+  .progress-bar-bg {
+    background: #f1f5f9;
+    border-radius: 99px;
+    height: 8px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    transition: width .4s;
+  }
+  .rate-label { font-size: 11px; color: #57606a; margin-top: 4px; text-align: right; }
+
+  /* ── Table ── */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 1100px; }
+  thead tr { background: #f7f8fa; }
+  th {
+    padding: 10px 10px;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: #57606a;
+    border-bottom: 2px solid #e5e7eb;
+    white-space: nowrap;
+  }
+  th.left { text-align: left; }
+  td {
+    padding: 8px 10px;
+    text-align: center;
+    border-bottom: 1px solid #f0f2f5;
+    color: #1f2328;
+  }
+  td.left { text-align: left; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #f7f8fa; }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 99px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .badge.yes { background: #dcfce7; color: #15803d; }
+  .badge.no  { background: #fee2e2; color: #b91c1c; }
+
+  .rate-chip {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .rate-chip.high   { background: #dcfce7; color: #15803d; }
+  .rate-chip.medium { background: #fef9c3; color: #92400e; }
+  .rate-chip.low    { background: #fee2e2; color: #b91c1c; }
+
+  .row-num { color: #57606a; font-size: 11px; }
+
+  /* ── Footer ── */
+  .footer {
+    text-align: center;
+    padding: 18px 0 0;
+    margin-top: 36px;
+    border-top: 1px solid #e5e7eb;
+    font-size: 12px;
+    color: #57606a;
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════ HEADER ══ -->
+<header class="header">
+  <div class="header-left">
+    <div class="header-icon">📋</div>
+    <div>
+      <h1>Student Assignment Tracking Dashboard</h1>
+      <p>DJJ20063 – Electrical &amp; Electronic Engineering &nbsp;|&nbsp; Academic Year 2024/2025</p>
+    </div>
+  </div>
+  <div class="header-badge">30 Students Enrolled</div>
+</header>
+
+<!-- ═══════════════════════════════════════════════════ MAIN ══ -->
+<div class="main">
+
+  <!-- KPI CARDS -->
+  <div class="section-label">Summary Overview</div>
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-icon blue">👥</div>
+      <div>
+        <div class="kpi-value" id="kpi-students">30</div>
+        <div class="kpi-label">Total Students</div>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon green">✅</div>
+      <div>
+        <div class="kpi-value" id="kpi-submitted"></div>
+        <div class="kpi-label">Total Submissions</div>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon amber">📊</div>
+      <div>
+        <div class="kpi-value" id="kpi-rate"></div>
+        <div class="kpi-label">Overall Submission Rate</div>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon red">⏳</div>
+      <div>
+        <div class="kpi-value" id="kpi-pending"></div>
+        <div class="kpi-label">Pending Submissions</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHARTS ROW -->
+  <div class="section-label" style="margin-top:28px;">Submission Analytics</div>
+  <div class="charts-grid">
+
+    <!-- Bar chart – per-assessment -->
+    <div class="card">
+      <div class="card-title">📈 Submissions per Assessment</div>
+      <div class="bar-chart-wrap">
+        <svg class="bar-chart" id="bar-svg" viewBox="0 0 580 240" preserveAspectRatio="xMidYMid meet"></svg>
+      </div>
+    </div>
+
+    <!-- Donut – overall -->
+    <div class="card">
+      <div class="card-title">🍩 Overall Submission Status</div>
+      <div class="donut-wrap">
+        <svg id="donut-svg" width="160" height="160" viewBox="0 0 160 160"></svg>
+        <div class="donut-legend" id="donut-legend"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ASSESSMENT SUMMARY CARDS -->
+  <div class="section-label" style="margin-top:28px;">Assessment Breakdown</div>
+  <div class="assess-grid" id="assess-grid"></div>
+
+  <!-- DETAILED TABLE -->
+  <div class="section-label" style="margin-top:28px;">Detailed Student Submission Table</div>
+  <div class="card" style="padding:0; overflow:hidden;">
+    <div class="table-wrap">
+      <table id="student-table">
+        <thead>
+          <tr>
+            <th class="left" rowspan="2" style="width:36px;">#</th>
+            <th class="left" rowspan="2" style="min-width:120px;">Student ID</th>
+            <th class="left" rowspan="2" style="min-width:140px;">Name</th>
+            <th colspan="8" style="background:#f0f4ff; color:#3b5bdb; border-bottom:1px solid #c5d0e6;">Assessment Submissions</th>
+            <th rowspan="2" style="width:52px;">Completed</th>
+            <th rowspan="2" style="width:52px;">Pending</th>
+            <th rowspan="2" style="width:68px;">Rate</th>
+          </tr>
+          <tr id="thead-assess"></tr>
+        </thead>
+        <tbody id="student-tbody"></tbody>
+        <tfoot>
+          <tr id="tfoot-row" style="background:#f7f8fa; font-weight:700;"></tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<div class="main" style="padding-top:0; padding-bottom:24px;">
+  <div class="footer">Made with IBM Bob</div>
+</div>
+
+<!-- ═══════════════════════════════════════════ DATA & LOGIC ══ -->
+<script>
+/* ─── Assessments ─────────────────────────────────────────────── */
+const ASSESSMENTS = [
+  { key: "quiz",   label: "Quiz" },
+  { key: "test1",  label: "Test 1" },
+  { key: "test2",  label: "Test 2" },
+  { key: "pt1",    label: "Practical Task 1" },
+  { key: "pt2",    label: "Practical Task 2" },
+  { key: "pt3",    label: "Practical Task 3" },
+  { key: "aff",    label: "Practical Task – Affective Assessment" },
+  { key: "assign", label: "Assignment Submission" },
+];
+const A = ASSESSMENTS;
+const N = 8;
+
+/* ─── 30 Students + submission data ─────────────────────────────
+   1 = submitted, 0 = pending
+   Purposefully varied to create realistic spread.
+────────────────────────────────────────────────────────────────── */
+const STUDENTS = [
+  //                          quiz  t1   t2   pt1  pt2  pt3  aff  asn
+  { id:"DJJ20063-001", name:"Ahmad Zulkifli",        s:[1,1,1,1,1,1,1,1] },
+  { id:"DJJ20063-002", name:"Nurul Ain Binti Hamid", s:[1,1,1,1,1,0,1,1] },
+  { id:"DJJ20063-003", name:"Muhammad Faiz",         s:[1,1,0,1,1,1,1,1] },
+  { id:"DJJ20063-004", name:"Siti Nabilah",          s:[1,0,1,1,0,1,1,0] },
+  { id:"DJJ20063-005", name:"Haziq Irfan",            s:[1,1,1,0,1,1,0,1] },
+  { id:"DJJ20063-006", name:"Norsyahida Bt Roslan",  s:[1,1,1,1,1,1,1,1] },
+  { id:"DJJ20063-007", name:"Amirul Hakimi",          s:[0,1,1,1,1,1,1,1] },
+  { id:"DJJ20063-008", name:"Farhana Mohd Ali",       s:[1,1,1,1,0,1,0,1] },
+  { id:"DJJ20063-009", name:"Wan Syafiq",             s:[1,0,0,1,1,1,1,1] },
+  { id:"DJJ20063-010", name:"Zulaikha Bt Zulkifli",  s:[1,1,1,1,1,1,1,1] },
+  { id:"DJJ20063-011", name:"Hafizuddin Mokhtar",    s:[0,1,1,1,1,0,1,1] },
+  { id:"DJJ20063-012", name:"Ain Syafiqah",           s:[1,1,1,0,1,1,1,0] },
+  { id:"DJJ20063-013", name:"Ridhwan Aziz",           s:[1,1,1,1,1,1,0,1] },
+  { id:"DJJ20063-014", name:"Nur Izzah Farhana",      s:[1,0,1,1,1,1,1,1] },
+  { id:"DJJ20063-015", name:"Aizat Syahmi",           s:[0,1,1,1,1,1,1,1] },
+  { id:"DJJ20063-016", name:"Syarifah Nadirah",       s:[1,1,0,0,1,1,1,1] },
+  { id:"DJJ20063-017", name:"Izzatul Husna",          s:[1,1,1,1,0,1,1,0] },
+  { id:"DJJ20063-018", name:"Khairul Anwar",          s:[1,1,1,1,1,1,1,1] },
+  { id:"DJJ20063-019", name:"Nur Syazwani",           s:[1,0,1,1,1,0,1,1] },
+  { id:"DJJ20063-020", name:"Irfan Hafiz",             s:[1,1,1,0,0,1,1,1] },
+  { id:"DJJ20063-021", name:"Hazirah Bt Ahmad",       s:[1,1,1,1,1,1,0,1] },
+  { id:"DJJ20063-022", name:"Muhamad Syafri",         s:[0,1,0,1,1,1,1,1] },
+  { id:"DJJ20063-023", name:"Nabilah Zahari",          s:[1,1,1,1,1,1,1,0] },
+  { id:"DJJ20063-024", name:"Azrul Hakim",             s:[1,0,1,1,0,1,1,1] },
+  { id:"DJJ20063-025", name:"Fatin Nazirah",           s:[1,1,1,0,1,1,1,1] },
+  { id:"DJJ20063-026", name:"Zafran Saifuddin",        s:[0,1,1,1,1,0,1,1] },
+  { id:"DJJ20063-027", name:"Nur Amira Syahirah",      s:[1,1,1,1,1,1,1,1] },
+  { id:"DJJ20063-028", name:"Syazwan Firdaus",         s:[1,0,0,1,1,1,0,1] },
+  { id:"DJJ20063-029", name:"Intan Nabilah",           s:[1,1,1,1,1,1,1,0] },
+  { id:"DJJ20063-030", name:"Rafiuddin Halim",         s:[1,1,1,1,1,1,1,1] },
+];
+
+/* ─── Derived data ───────────────────────────────────────────── */
+const TOTAL = 30;
+const TOTAL_SLOTS = TOTAL * N;
+
+// per-assessment submitted count
+const perAssess = A.map((_,i) => STUDENTS.reduce((acc, st) => acc + st.s[i], 0));
+
+// totals
+const totalSubmitted = STUDENTS.reduce((s, st) => s + st.s.reduce((a,b)=>a+b,0), 0);
+const totalPending   = TOTAL_SLOTS - totalSubmitted;
+const overallRate    = (totalSubmitted / TOTAL_SLOTS * 100).toFixed(1);
+
+/* ─── KPI ────────────────────────────────────────────────────── */
+document.getElementById("kpi-submitted").textContent = totalSubmitted;
+document.getElementById("kpi-rate").textContent      = overallRate + "%";
+document.getElementById("kpi-pending").textContent   = totalPending;
+
+/* ─── Colour palette ──────────────────────────────────────────── */
+const COLORS = ["#3b82f6","#10b981","#f59e0b","#8b5cf6","#ec4899","#06b6d4","#f97316","#6366f1"];
+const PENDING_COLOR = "#fca5a5";
+const SUBMIT_COLOR  = "#86efac";
+
+function rateColor(r) {
+  if (r >= 85) return "#15803d";
+  if (r >= 60) return "#92400e";
+  return "#b91c1c";
+}
+function rateBarColor(r) {
+  if (r >= 85) return "#22c55e";
+  if (r >= 60) return "#f59e0b";
+  return "#ef4444";
+}
+function rateClass(r) {
+  if (r >= 85) return "high";
+  if (r >= 60) return "medium";
+  return "low";
+}
+
+/* ─── Bar Chart (SVG) ────────────────────────────────────────── */
+(function buildBar() {
+  const svg   = document.getElementById("bar-svg");
+  const W     = 580, H = 240;
+  const PL=50, PR=16, PT=16, PB=60;
+  const chartW = W - PL - PR;
+  const chartH = H - PT - PB;
+  const maxVal = 30;
+  const barW   = (chartW / N) * 0.55;
+  const gap    = chartW / N;
+
+  // Y gridlines + labels
+  [0,10,20,30].forEach(v => {
+    const y = PT + chartH - (v/maxVal)*chartH;
+    const line = document.createElementNS("http://www.w3.org/2000/svg","line");
+    line.setAttribute("x1", PL); line.setAttribute("x2", W-PR);
+    line.setAttribute("y1", y);  line.setAttribute("y2", y);
+    line.setAttribute("stroke","#e5e7eb"); line.setAttribute("stroke-width","1");
+    svg.appendChild(line);
+    const txt = document.createElementNS("http://www.w3.org/2000/svg","text");
+    txt.setAttribute("x", PL-6); txt.setAttribute("y", y+4);
+    txt.setAttribute("text-anchor","end"); txt.setAttribute("font-size","10");
+    txt.setAttribute("fill","#57606a"); txt.textContent = v;
+    svg.appendChild(txt);
+  });
+
+  // Bars
+  perAssess.forEach((val, i) => {
+    const x   = PL + gap * i + (gap - barW) / 2;
+    const bH  = (val / maxVal) * chartH;
+    const y   = PT + chartH - bH;
+
+    // Pending (background)
+    const bgRect = document.createElementNS("http://www.w3.org/2000/svg","rect");
+    bgRect.setAttribute("x", x); bgRect.setAttribute("y", PT);
+    bgRect.setAttribute("width", barW); bgRect.setAttribute("height", chartH);
+    bgRect.setAttribute("rx","4"); bgRect.setAttribute("fill","#f3f4f6");
+    svg.appendChild(bgRect);
+
+    // Submitted
+    const rect = document.createElementNS("http://www.w3.org/2000/svg","rect");
+    rect.setAttribute("x", x); rect.setAttribute("y", y);
+    rect.setAttribute("width", barW); rect.setAttribute("height", bH);
+    rect.setAttribute("rx","4"); rect.setAttribute("fill", COLORS[i]);
+    svg.appendChild(rect);
+
+    // Value label
+    const vTxt = document.createElementNS("http://www.w3.org/2000/svg","text");
+    vTxt.setAttribute("x", x + barW/2); vTxt.setAttribute("y", y - 4);
+    vTxt.setAttribute("text-anchor","middle"); vTxt.setAttribute("font-size","10");
+    vTxt.setAttribute("font-weight","700"); vTxt.setAttribute("fill","#1f2328");
+    vTxt.textContent = val;
+    svg.appendChild(vTxt);
+
+    // X-axis label (abbreviated)
+    const shortLabel = A[i].label.replace("Practical Task – ","PT-").replace("Practical Task ","PT").replace("Assignment Submission","Assignment").replace("Test ","T").replace("Quiz","Quiz");
+    const xTxt = document.createElementNS("http://www.w3.org/2000/svg","text");
+    xTxt.setAttribute("x", x + barW/2); xTxt.setAttribute("y", H - PB + 14);
+    xTxt.setAttribute("text-anchor","middle"); xTxt.setAttribute("font-size","9.5");
+    xTxt.setAttribute("fill","#57606a");
+    xTxt.textContent = shortLabel;
+    svg.appendChild(xTxt);
+  });
+
+  // X axis line
+  const xLine = document.createElementNS("http://www.w3.org/2000/svg","line");
+  xLine.setAttribute("x1",PL); xLine.setAttribute("x2",W-PR);
+  xLine.setAttribute("y1",PT+chartH); xLine.setAttribute("y2",PT+chartH);
+  xLine.setAttribute("stroke","#e5e7eb"); xLine.setAttribute("stroke-width","1");
+  svg.appendChild(xLine);
+})();
+
+/* ─── Donut Chart (SVG) ──────────────────────────────────────── */
+(function buildDonut() {
+  const submitted = totalSubmitted;
+  const pending   = totalPending;
+  const total     = TOTAL_SLOTS;
+
+  const cx=80, cy=80, R=65, r=44;
+  const sections = [
+    { val: submitted, color:"#22c55e", label:"Submitted" },
+    { val: pending,   color:"#f87171", label:"Pending" },
+  ];
+  const svg = document.getElementById("donut-svg");
+  let startAngle = -Math.PI/2;
+
+  sections.forEach(sec => {
+    const frac = sec.val / total;
+    const end  = startAngle + frac * 2 * Math.PI;
+    const x1s=cx+R*Math.cos(startAngle), y1s=cy+R*Math.sin(startAngle);
+    const x2s=cx+R*Math.cos(end),        y2s=cy+R*Math.sin(end);
+    const x1i=cx+r*Math.cos(startAngle), y1i=cy+r*Math.sin(startAngle);
+    const x2i=cx+r*Math.cos(end),        y2i=cy+r*Math.sin(end);
+    const large = frac > 0.5 ? 1 : 0;
+    const d = `M${x1s},${y1s} A${R},${R},0,${large},1,${x2s},${y2s} L${x2i},${y2i} A${r},${r},0,${large},0,${x1i},${y1i} Z`;
+    const path = document.createElementNS("http://www.w3.org/2000/svg","path");
+    path.setAttribute("d",d); path.setAttribute("fill",sec.color);
+    svg.appendChild(path);
+    startAngle = end;
+  });
+
+  // centre text
+  const pct = (submitted/total*100).toFixed(1);
+  const t1 = document.createElementNS("http://www.w3.org/2000/svg","text");
+  t1.setAttribute("x",cx); t1.setAttribute("y",cy-4);
+  t1.setAttribute("text-anchor","middle"); t1.setAttribute("font-size","18");
+  t1.setAttribute("font-weight","700"); t1.setAttribute("fill","#1f2328");
+  t1.textContent = pct+"%";
+  svg.appendChild(t1);
+  const t2 = document.createElementNS("http://www.w3.org/2000/svg","text");
+  t2.setAttribute("x",cx); t2.setAttribute("y",cy+14);
+  t2.setAttribute("text-anchor","middle"); t2.setAttribute("font-size","9.5");
+  t2.setAttribute("fill","#57606a"); t2.textContent = "Submitted";
+  svg.appendChild(t2);
+
+  // Legend
+  const legend = document.getElementById("donut-legend");
+  sections.forEach(sec => {
+    const pctVal = (sec.val/total*100).toFixed(1);
+    legend.innerHTML += `
+      <div class="legend-row">
+        <span class="legend-dot" style="background:${sec.color}"></span>
+        <span>${sec.label}</span>
+        <span class="legend-val">${sec.val} <span style="font-size:11px;color:#57606a;">(${pctVal}%)</span></span>
+      </div>`;
+  });
+  // total slots info
+  legend.innerHTML += `<div style="margin-top:12px; padding-top:10px; border-top:1px solid #e5e7eb; font-size:12px; color:#57606a;">
+    Total Slots: <strong style="color:#1f2328;">${total}</strong><br>
+    (${TOTAL} students × ${N} assessments)
+  </div>`;
+})();
+
+/* ─── Assessment Summary Cards ───────────────────────────────── */
+(function buildAssessCards() {
+  const grid = document.getElementById("assess-grid");
+  A.forEach((a, i) => {
+    const sub  = perAssess[i];
+    const pend = TOTAL - sub;
+    const rate = (sub / TOTAL * 100).toFixed(0);
+    const color = COLORS[i];
+    const barCol = rateBarColor(Number(rate));
+    grid.innerHTML += `
+      <div class="assess-card">
+        <div class="assess-title" style="border-left:3px solid ${color}; padding-left:8px;">${a.label}</div>
+        <div class="assess-stats">
+          <div class="assess-stat">
+            <div class="num sub">${sub}</div>
+            <div class="lbl">Submitted</div>
+          </div>
+          <div class="assess-stat">
+            <div class="num pend">${pend}</div>
+            <div class="lbl">Pending</div>
+          </div>
+        </div>
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" style="width:${rate}%; background:${barCol};"></div>
+        </div>
+        <div class="rate-label" style="color:${rateColor(Number(rate))}; font-weight:700;">${rate}% rate</div>
+      </div>`;
+  });
+})();
+
+/* ─── Table: header row 2 ────────────────────────────────────── */
+(function buildTableHeader() {
+  const tr = document.getElementById("thead-assess");
+  A.forEach((a, i) => {
+    const th = document.createElement("th");
+    th.style.background = "#f0f4ff";
+    th.style.color = COLORS[i];
+    th.style.borderBottom = "2px solid #e5e7eb";
+    th.style.maxWidth = "72px";
+    th.style.whiteSpace = "normal";
+    th.style.lineHeight = "1.3";
+    th.textContent = a.label;
+    tr.appendChild(th);
+  });
+})();
+
+/* ─── Table: body ────────────────────────────────────────────── */
+(function buildTableBody() {
+  const tbody = document.getElementById("student-tbody");
+  STUDENTS.forEach((st, rowIdx) => {
+    const completed = st.s.reduce((a,b)=>a+b,0);
+    const pending   = N - completed;
+    const rate      = (completed / N * 100).toFixed(0);
+    let html = `<td class="row-num">${rowIdx+1}</td>`;
+    html += `<td class="left" style="font-family:monospace; font-size:11px;">${st.id}</td>`;
+    html += `<td class="left" style="font-weight:600;">${st.name}</td>`;
+    st.s.forEach(v => {
+      html += `<td><span class="badge ${v?'yes':'no'}">${v?'✓ Yes':'✗ No'}</span></td>`;
+    });
+    html += `<td><strong style="color:#15803d;">${completed}</strong></td>`;
+    html += `<td><strong style="color:#dc2626;">${pending}</strong></td>`;
+    html += `<td><span class="rate-chip ${rateClass(Number(rate))}">${rate}%</span></td>`;
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = html;
+    tbody.appendChild(tr);
+  });
+})();
+
+/* ─── Table: footer totals ───────────────────────────────────── */
+(function buildTableFooter() {
+  const tr = document.getElementById("tfoot-row");
+  let html = `<td colspan="3" class="left" style="padding:10px; font-size:12px; color:#57606a;">
+    TOTAL (${TOTAL} students)
+  </td>`;
+  perAssess.forEach((sub, i) => {
+    const pend = TOTAL - sub;
+    html += `<td style="font-size:11px; line-height:1.5; color:#1f2328;">
+      <span style="color:#15803d;">${sub}</span> / <span style="color:#dc2626;">${pend}</span>
+    </td>`;
+  });
+  html += `<td style="color:#15803d;">${totalSubmitted}</td>`;
+  html += `<td style="color:#dc2626;">${totalPending}</td>`;
+  html += `<td><span class="rate-chip ${rateClass(Number(overallRate))}">${overallRate}%</span></td>`;
+  tr.innerHTML = html;
+})();
+</script>
+
+</body>
+</html>
